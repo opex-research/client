@@ -23,7 +23,5 @@ ENV PATH /usr/local/go/bin:$PATH
 WORKDIR /root/origo
 RUN make build
 
-EXPOSE 8080
-
 # start command
 CMD ["/bin/bash"]

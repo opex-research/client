@@ -14,9 +14,9 @@ import (
 	"os"
 	"time"
 
-	lp "github.com/anonymoussubmission001/origo/ledger_policy"
-	pcreds "github.com/anonymoussubmission001/origo/prover/credentials"
-	mtls "github.com/anonymoussubmission001/origo/prover/tls"
+	pcreds "github.com/anonymoussubmission001/origo/dependencies/credentials"
+	lp "github.com/anonymoussubmission001/origo/dependencies/ledger_policy"
+	mtls "github.com/anonymoussubmission001/origo/dependencies/tls"
 	oohttp "github.com/ooni/oohttp"
 )
 

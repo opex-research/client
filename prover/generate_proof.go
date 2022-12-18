@@ -1,16 +1,15 @@
 package prover
 
 import (
-	"log"
-	// "fmt"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"strconv"
 
-	lp "github.com/anonymoussubmission001/origo/ledger_policy"
-	tls "github.com/anonymoussubmission001/origo/prover/tls"
+	lp "github.com/anonymoussubmission001/origo/dependencies/ledger_policy"
+	tls "github.com/anonymoussubmission001/origo/dependencies/tls"
 )
 
 type Prover struct {

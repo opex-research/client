@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-cd $SCRIPT_DIR
+cd ${SCRIPT_DIR}
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   ./setup-developer-host-debian.sh
@@ -18,7 +18,7 @@ else
 fi
 
 # download jar binary
-cd $SCRIPT_DIR
+cd $SCRIPT_DIR/..
 cd ./dependencies/jsnark-demo/JsnarkCircuitBuilder
 
 curl -LO https://www.bouncycastle.org/download/bcprov-jdk15on-159.jar

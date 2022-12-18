@@ -2,14 +2,14 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd ${SCRIPT_DIR}
 
+cd ${SCRIPT_DIR}/..
+
 ###### function declarations ############
 
 cleanEvaluationLogs()
 {
   # echo "I was called as : $@"
   echo "cleaning evaluation logs"
-  rm -rf server/evaluation.log
-  rm -rf proxy/service/evaluation.log
   rm -rf prover/tls/evaluation.log
   rm -rf commands/evaluation.log
 }
@@ -19,11 +19,6 @@ cleanCapturedTraffic()
   echo "cleaning capture traffic data"
   rm -rf prover/local_storage/PolicyExtractJson.json
   rm -rf prover/local_storage/PolicyExtractJsonShared.json
-  rm -rf proxy/service/local_storage/PublicInput.json
-  rm -rf proxy/service/local_storage/ProverSentRecords.raw
-  rm -rf proxy/service/local_storage/ProverSentRecords.txt
-  rm -rf proxy/service/local_storage/ProverSentRecords.raw
-  rm -rf proxy/service/local_storage/ProverSentRecords.txt
 }
 
 cleanSnarkFiles()
@@ -74,19 +69,11 @@ runEvaluationLocal()
     echo evaluate policy file: $val
 
     # run protocol
-    ./origo server-start
-    ./origo proxy-start
-
     ./origo policy-transpile $val LocalGen
     ./origo prover-request $val local1
-    ./origo proxy-postprocess $val
-
-    ./origo server-stop
-    ./origo proxy-stop
 
     ./origo prover-compile LocalGen $val
     ./origo prover-prove LocalGen
-    ./origo proxy-verify
   done
 
   echo "evaluation done"

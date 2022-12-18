@@ -1,19 +1,15 @@
 package commands
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	pcred "github.com/anonymoussubmission001/origo/dependencies/credentials"
 	pc "github.com/anonymoussubmission001/origo/prover"
-	pcred "github.com/anonymoussubmission001/origo/prover/credentials"
 )
 
 func ProverRequestCommand() *cobra.Command {
@@ -187,76 +183,6 @@ func ProverProveCommand() *cobra.Command {
 	return cmd
 }
 
-func ProverCredsListCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "prover-credentials-list",
-		Short: "list prover credentials filenames of different APIs.",
-		Run: func(cmd *cobra.Command, args []string) {
-
-			// read folder
-			files, err := ioutil.ReadDir("prover/credentials")
-			if err != nil {
-				log.Println("ioutil.ReadDir", err)
-			}
-
-			// print filename if not a directory
-			for _, file := range files {
-				if !file.IsDir() && strings.Contains(file.Name(), ".json") {
-					fmt.Println(strings.Split(file.Name(), ".json")[0])
-				}
-			}
-
-			return
-		},
-	}
-
-	return cmd
-}
-
-func ProverCredsGetCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "prover-credentials-get",
-		Short: "return prover credential configuration of provided filename.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-
-			// check for credential filename as input argument
-			if len(args) < 1 {
-				fmt.Println()
-				return errors.New("\n  please provide credential filename without extension: origo prover-credentials-get <credential-filename>\n")
-			}
-			credName := args[0]
-
-			// read config file
-			jsonFile, err := os.Open("prover/credentials/" + credName + ".json")
-			if err != nil {
-				log.Println("os.Open() error", err)
-				return err
-			}
-			defer jsonFile.Close()
-
-			// parse json
-			byteValue, _ := ioutil.ReadAll(jsonFile)
-			var credJson pcred.ProverCredential
-			json.Unmarshal(byteValue, &credJson)
-
-			// pretty print json string
-			s, err := json.MarshalIndent(credJson, "", "\t")
-			if err != nil {
-				log.Println("json.MashalIndent() error:", err)
-				return err
-			}
-
-			// print to console
-			fmt.Print(string(s))
-			fmt.Println()
-
-			return nil
-		},
-	}
-
-	return cmd
-}
-
 func ProverCredsRefreshCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prover-credentials-refresh",
@@ -309,41 +235,6 @@ func ProverCredsRefreshCommand() *cobra.Command {
 			}
 
 			return nil
-		},
-	}
-
-	return cmd
-}
-
-func ProverConfigCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "prover-config",
-		Short: "return prover local configurations.",
-		Run: func(cmd *cobra.Command, args []string) {
-
-			// open config file
-			jsonFile, err := os.Open("prover/config.json")
-			if err != nil {
-				log.Println("os.Open() error", err)
-				return
-			}
-			defer jsonFile.Close()
-
-			// read and parse configs
-			byteValue, _ := ioutil.ReadAll(jsonFile)
-			var config pc.ProverConfig
-			json.Unmarshal(byteValue, &config)
-
-			s, err := json.MarshalIndent(config, "", "\t")
-			if err != nil {
-				log.Println("json.MashalIndent() error:", err)
-			}
-
-			// print to console
-			fmt.Print(string(s))
-			fmt.Println()
-
-			return
 		},
 	}
 

@@ -1,7 +1,0 @@
-{
-	"HostAddr": "",
-	"HostPort": "8082",
-	"StoragePath": "./local_storage/",
-	"ProverSentRecordsFileName": "ProverSentRecords",
-	"ServerSentRecordsFileName": "ServerSentRecords"
-}

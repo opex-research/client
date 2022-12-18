@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	pcreds "github.com/anonymoussubmission001/origo/dependencies/credentials"
+	lp "github.com/anonymoussubmission001/origo/dependencies/ledger_policy"
 	"io/ioutil"
 	"log"
 	"regexp"
 	"strings"
-
-	lp "github.com/anonymoussubmission001/origo/ledger_policy"
-	pcreds "github.com/anonymoussubmission001/origo/prover/credentials"
 )
 
 const (
