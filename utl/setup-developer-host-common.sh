@@ -22,5 +22,3 @@ cd $SCRIPT_DIR/..
 cd ./dependencies/jsnark-demo/JsnarkCircuitBuilder
 
 curl -LO https://www.bouncycastle.org/download/bcprov-jdk15on-159.jar
-# TODO: remove macOS JUnit fix
-# curl -LO https://search.maven.org/remotecontent?filepath=junit/junit/4.13.2/junit-4.13.2.jar

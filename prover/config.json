@@ -1,5 +1,6 @@
 {
-	"ZkSnarkBuildPath": "dependencies/libsnark-demo/build/libsnark/",
+	"JSnarkBuildPath": "dependencies/jsnark-demo/JsnarkCircuitBuilder/",
+	"LibSnarkBuildPath": "dependencies/libsnark-demo/build/libsnark/",
 	"StoragePath": "local_storage/",
 	"ProveSentRecordsFileName": "ProverSentRecords",
 	"ServerSentRecordsFileName": "ServerSentRecords",

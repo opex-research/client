@@ -36,8 +36,9 @@ func PolicyTranspileCommand() *cobra.Command {
 				return err
 			}
 
+			// TODO: fix hardcoded path
 			// read config file
-			jsonFile, err := os.Open("ledger_policy/" + policyName + ".json")
+			jsonFile, err := os.Open("dependencies/ledger_policy/" + policyName + ".json")
 			if err != nil {
 				log.Println("os.Open() error", err)
 				return err

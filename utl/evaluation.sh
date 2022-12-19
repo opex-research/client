@@ -10,34 +10,23 @@ cleanEvaluationLogs()
 {
   # echo "I was called as : $@"
   echo "cleaning evaluation logs"
-  rm -rf prover/tls/evaluation.log
-  rm -rf commands/evaluation.log
+  rm -rf log
 }
 
 cleanCapturedTraffic()
 {
   echo "cleaning capture traffic data"
-  rm -rf prover/local_storage/PolicyExtractJson.json
-  rm -rf prover/local_storage/PolicyExtractJsonShared.json
+  rm -rf local_storage
 }
 
 cleanSnarkFiles()
 {
   echo "cleaning snark specific files"
   rm -rf dependencies/jsnark-demo/JsnarkCircuitBuilder/src/examples/generators/transpiled/LocalGen.java
-  rm -rf dependencies/jsnark-demo/JsnarkCircuitBuilder/src/examples/generators/transpiled/PayPalGen.java
   rm -rf dependencies/jsnark-demo/JsnarkCircuitBuilder/bin/examples/generators/transpiled/LocalGen.class
-  rm -rf dependencies/jsnark-demo/JsnarkCircuitBuilder/bin/examples/generators/transpiled/PayPalGen.class
 
-  rm -rf prover/zksnark_build/jsnark/bin/examples/generators/transpiled/LocalGen.class
-  rm -rf prover/zksnark_build/jsnark/bin/examples/generators/transpiled/PayPalGen.class
-  rm -rf prover/zksnark_build/jsnark/LocalGen_Circuit.arith
-  rm -rf prover/zksnark_build/jsnark/PayPalGen_Circuit.arith
-  rm -rf prover/zksnark_build/jsnark/LocalGen_Circuit.in
-  rm -rf prover/zksnark_build/jsnark/PayPalGen_Circuit.in
-
-  rm -rf prover/zksnark_build/proof.raw
-  rm -rf prover/zksnark_build/vk.raw
+  rm -rf dependencies/jsnark-demo/JsnarkCircuitBuilder/LocalGen_Circuit.arith
+  rm -rf dependencies/jsnark-demo/JsnarkCircuitBuilder/LocalGen_Circuit.in
 }
 
 runEvaluationLocal()
@@ -48,6 +37,7 @@ runEvaluationLocal()
 
   # logging cleanup
   cleanEvaluationLogs
+  mkdir log
 
   ###### local mode ######################
 
@@ -61,6 +51,7 @@ runEvaluationLocal()
 
     # cleaning files
     cleanCapturedTraffic
+    mkdir local_storage
 
     # clean up snark files
     cleanSnarkFiles

@@ -101,8 +101,9 @@ func NewClient(policyFileName, credentialFileName string) (*ApiClient, error) {
 	// init empty ApiClient
 	ac := new(ApiClient)
 
+	// TODO: fix hardcoded path
 	// open policy and deserialize to struct
-	policyFile, err := os.Open("ledger_policy/" + policyFileName + ".json")
+	policyFile, err := os.Open("dependencies/ledger_policy/" + policyFileName + ".json")
 	if err != nil {
 		log.Println("os.Open() error", err)
 		return nil, err
@@ -111,6 +112,7 @@ func NewClient(policyFileName, credentialFileName string) (*ApiClient, error) {
 	byteValue, _ := ioutil.ReadAll(policyFile)
 	json.Unmarshal(byteValue, &ac.Policy)
 
+	// TODO: fix hardcoded path
 	// open config and deserialize to struct
 	configFile, err := os.Open("prover/config.json")
 	if err != nil {
@@ -121,8 +123,9 @@ func NewClient(policyFileName, credentialFileName string) (*ApiClient, error) {
 	byteValue2, _ := ioutil.ReadAll(configFile)
 	json.Unmarshal(byteValue2, &ac.Config)
 
+	// TODO: fix hardcoded path
 	// open and deserialize credential to struct
-	credsFile, err := os.Open("prover/credentials/" + credentialFileName + ".json")
+	credsFile, err := os.Open("dependencies/credentials/" + credentialFileName + ".json")
 	if err != nil {
 		log.Println("os.Open() error", err)
 		return nil, err
@@ -152,13 +155,14 @@ func NewClient(policyFileName, credentialFileName string) (*ApiClient, error) {
 	caCertPool, _ := x509.SystemCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
+	// TODO: fix hardcoded path
 	// configure tls suite
 	config := &tls.Config{
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: false,
 		Certificates:       []tls.Certificate{cert},
 		CurvePreferences:   []tls.CurveID{tls.CurveP256},
-		NextProtos:         []string{"http/1.1", "pol:" + ac.Config.PolicyPath + JsonFileWrapper(ac.PolicyFileName), "loc:" + ac.Config.StoragePath, "cred:" + "prover/credentials/" + JsonFileWrapper(ac.CredentialFileName)},
+		NextProtos:         []string{"http/1.1", "pol:" + ac.Config.PolicyPath + JsonFileWrapper(ac.PolicyFileName), "loc:" + ac.Config.StoragePath, "cred:" + "dependencies/credentials/" + JsonFileWrapper(ac.CredentialFileName)},
 		MinVersion:         tls.VersionTLS13,
 		MaxVersion:         tls.VersionTLS13,
 		CipherSuites: []uint16{

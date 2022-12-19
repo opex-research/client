@@ -46,6 +46,7 @@ func (t *Transpiler) Transpile() error {
 	}
 	generatorStr := builder.String()
 
+	// TODO: fix hardcoded path
 	// store generator file in jsnark-demo
 	generatorFile, err := os.OpenFile("dependencies/jsnark-demo/JsnarkCircuitBuilder/src/examples/generators/transpiled/"+t.FileName+".java", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -63,6 +64,7 @@ func (t *Transpiler) Transpile() error {
 	// debug
 	log.Println("generator file has been written successfully.")
 
+	// TODO: fix hardcoded path, remove rebuild of Java class files
 	// compile generator file
 	cmd := exec.Command("bash", "-c", "javac -d bin -cp /usr/share/java/junit4.jar:bcprov-jdk15on-159.jar $(find ./src/* | grep \".java$\")")
 	cmd.Dir = "dependencies/jsnark-demo/JsnarkCircuitBuilder/"
@@ -75,15 +77,6 @@ func (t *Transpiler) Transpile() error {
 	// debug command output of compile
 	// log.Println("compile java generator, output:", string(out))
 	log.Println("java generator code has been compiled successfully.")
-
-	// overwrite bin folder zk-build/jsnark
-	cmd2 := exec.Command("cp", "-r", "dependencies/jsnark-demo/JsnarkCircuitBuilder/bin", "prover/zksnark_build/jsnark")
-	cmd.Dir = "../"
-	if err := cmd2.Run(); err != nil {
-		log.Println("cmd2.Run() error:", err)
-		return err
-	}
-	log.Println("compiled generator code has been copied successfully to prover folder..")
 
 	return nil
 }

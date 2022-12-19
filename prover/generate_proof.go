@@ -9,13 +9,13 @@ import (
 	"strconv"
 
 	lp "github.com/anonymoussubmission001/origo/dependencies/ledger_policy"
-	tls "github.com/anonymoussubmission001/origo/dependencies/tls"
+	mtls "github.com/anonymoussubmission001/origo/dependencies/tls"
 )
 
 type Prover struct {
 	Policy            lp.Policy
 	Config            ProverConfig
-	PolicyExtract     tls.PolicyExtract
+	PolicyExtract     mtls.PolicyExtract
 	PolicyFileName    string
 	GeneratorFileName string
 }
@@ -25,9 +25,10 @@ func NewProver(policyFileName string, generatorFileName string, configOnly bool)
 	// init prover
 	prover := new(Prover)
 
+	// TODO: fix hardcoded path
 	// open policy and deserialize to struct
 	if !configOnly {
-		policyFile, err := os.Open("ledger_policy/" + policyFileName + ".json")
+		policyFile, err := os.Open("dependencies/ledger_policy/" + policyFileName + ".json")
 		if err != nil {
 			log.Println("os.Open() error", err)
 			return nil, err
@@ -40,6 +41,7 @@ func NewProver(policyFileName string, generatorFileName string, configOnly bool)
 	prover.PolicyFileName = policyFileName
 	prover.GeneratorFileName = generatorFileName
 
+	// TODO: fix hardcoded path
 	// open config and deserialize to struct
 	configFile, err := os.Open("prover/config.json")
 	if err != nil {
@@ -106,7 +108,7 @@ func (p *Prover) CompileCircuit() error {
 	// command to build .arth .in files
 	runCmd := exec.Command("java", "-cp", "bin", "examples.generators.transpiled."+p.GeneratorFileName, blockNr, startBlockIdx, keyValuePairLen, offsetKeyValuePair, offsetValue, floatStringLen, dotIdx, keyValueStartPattern, HSStr, SHTSInnerHashStr, kfsInnerHashStr, sfInnerHashStr, dHSInnerHashStr, MSHSInnerHashStr, SATSInnerHashStr, CATSInnerHashStr, kSAPPKeyInnerHashStr, kSAPPIVInnerHashStr, kCAPPKeyInnerHashStr, kCAPPIVInnerHashStr, plaintextStr, SFStr, SeqCounterStr, ciphertextStr, threshold, compareMaxLen)
 	// log.Println("cmd:::", runCmd)
-	runCmd.Dir = p.Config.ZkSnarkBuildPath + "/jsnark"
+	runCmd.Dir = p.Config.JSnarkBuildPath
 
 	// build circuit
 	data, err := runCmd.Output()
@@ -120,21 +122,30 @@ func (p *Prover) CompileCircuit() error {
 }
 
 func (p *Prover) GenerateProof() error {
-
+	// TODO: fix hardcoded path
 	// ZK snark setup and proof generation
-	setupCmd := exec.Command("./jsnark_interface/bin/run_generate_prove",
-		"./jsnark/"+p.GeneratorFileName+"_Circuit.arith", "./jsnark/"+p.GeneratorFileName+"_Circuit.in")
-	setupCmd.Dir = p.Config.ZkSnarkBuildPath
+	setupCmd := exec.Command(p.Config.LibSnarkBuildPath+"jsnark_interface/run_generate_prove",
+		p.Config.JSnarkBuildPath+p.GeneratorFileName+"_Circuit.arith", p.Config.JSnarkBuildPath+p.GeneratorFileName+"_Circuit.in")
+	setupCmd.Dir = "./"
 
 	// compute setup and proof
 	data, err := setupCmd.Output()
 	if err != nil {
-		log.Println("setupCmd.Output() error:", err)
+		log.Println("setupCmd.Output() error:", err, data)
 		return err
 	}
 
 	// print output
 	log.Println(string(data))
+
+	//TODO: replace with API call
+	// copy proof files
+	copyCmd := exec.Command("mv", "-f", "proof.raw", p.Config.LibSnarkBuildPath)
+	copyCmd.Dir = "./"
+	err = copyCmd.Run()
+
+	copyCmd = exec.Command("mv", "-f", "vk.raw", p.Config.LibSnarkBuildPath)
+	err = copyCmd.Run()
 
 	return nil
 }

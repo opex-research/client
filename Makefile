@@ -12,7 +12,7 @@ setupDeveloperHost:
 	$(MAKE) -C utl/ setupDeveloperHost
 
 clean:
-	# TODO: remove build outputs
+	# TODO: remove build outputs via Makefile
 	rm -rf ./dependencies/jsnark-demo/JsnarkCircuitBuilder/bin
 	rm -rf ./dependencies/libsnark-demo/build
 	rm -rf origo
@@ -20,8 +20,6 @@ clean:
 
 build: clean
 	$(MAKE) -C utl/ build
-	#TODO: check GitCoin usecase
-	# $(MAKE) -C prover/ build
 	go mod tidy
 	go build -buildvcs=false .
 
@@ -34,5 +32,5 @@ buildDockerImageClean: clean
 runDockerImage:
 	$(MAKE) -C utl/ runDockerImage
 
-runEvaluationLocal: build
+runEvaluationLocal:
 	$(MAKE) -C utl/ runEvaluationLocal

@@ -1,7 +1,8 @@
 package prover
 
 type ProverConfig struct {
-	ZkSnarkBuildPath          string
+	JSnarkBuildPath           string
+	LibSnarkBuildPath         string
 	StoragePath               string
 	ProveSentRecordsFileName  string
 	ServerSentRecordsFileName string
