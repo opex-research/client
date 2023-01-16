@@ -1,0 +1,12 @@
+{
+	"JSnarkBuildPath": "dependencies/jsnark-demo/JsnarkCircuitBuilder/",
+	"LibSnarkBuildPath": "dependencies/libsnark-demo/build/libsnark/",
+	"StoragePath": "local_storage/",
+	"ProveSentRecordsFileName": "ProverSentRecords",
+	"ServerSentRecordsFileName": "ServerSentRecords",
+	"PathCaCrt": "certs/certificates/ca.crt",
+	"PathProverPem": "certs/certificates/prover.pem",
+	"PathProverKey": "certs/certificates/prover.key",
+	"PolicyPath": "dependencies/ledger_policy/",
+	"Rebuild": true
+}
