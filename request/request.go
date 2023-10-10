@@ -29,11 +29,11 @@ type RequestData struct {
 	recordMap map[string]tls.RecordMeta
 }
 
-func NewRequest() RequestTLS {
+func NewRequest(serverDomain string, serverPath string, proxyURL string) RequestTLS {
 	return RequestTLS{
-		ServerDomain:    "localhost",
-		ServerPath:      "/my-btc-usdt-order", // "testserver.origodata.io"
-		ProxyURL:        "localhost:8082",
+		ServerDomain:    serverDomain,
+		ServerPath:      serverPath, // "testserver.origodata.io"
+		ProxyURL:        proxyURL,
 		UrlPrivateParts: "",
 		AccessToken:     "",
 		StorageLocation: "./local_storage/",
@@ -163,8 +163,8 @@ func (r *RequestTLS) Call(hsOnly bool) (RequestData, error) {
 
 	// reads response body
 	msg, _ := ioutil.ReadAll(resp.Body)
-	log.Info().Msg("response data:")
-	log.Info().Msg(string(msg))
+	log.Trace().Msg("response data:")
+	log.Trace().Msg(string(msg))
 
 	// catch time
 	elapsed = time.Since(start)

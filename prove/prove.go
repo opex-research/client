@@ -168,16 +168,17 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 		ValueEnd:       valueEnd,
 	}
 
-	fmt.Println("intermediateHashHSopadAssign:", intermediateHashHSopadAssign)
-	fmt.Println("dHSinAssign:", dHSinAssign)
-	fmt.Println("MSinAssign:", MSinAssign)
-	fmt.Println("SATSinAssign:", SATSinAssign)
-	fmt.Println("tkSAPPinAssign:", tkSAPPinAssign)
-	fmt.Println("ivCounterAssign:", ivCounterAssign)
-	fmt.Println("ecbkAssign:", ecbkAssign)
-	fmt.Println("ecb0Assign:", ecb0Assign)
-	fmt.Println("chipherChunksAssign:", chipherChunksAssign)
-	fmt.Println("ivAssign:", ivAssign)
+	log.Trace().Msgf("intermediateHashHSopadAssign: %v", intermediateHashHSopadAssign)
+	log.Trace().Msgf("dHSinAssign: %v", dHSinAssign)
+	log.Trace().Msgf("MSinAssign: %v", MSinAssign)
+	log.Trace().Msgf("SATSinAssign: %v", SATSinAssign)
+	log.Trace().Msgf("tkSAPPinAssign: %v", tkSAPPinAssign)
+	log.Trace().Msgf("ivCounterAssign: %v", ivCounterAssign)
+	log.Trace().Msgf("ecbkAssign: %v", ecbkAssign)
+	log.Trace().Msgf("ecb0Assign: %v", ecb0Assign)
+	log.Trace().Msgf("chipherChunksAssign: %v", chipherChunksAssign)
+	log.Trace().Msgf("ivAssign: %v", ivAssign)
+
 
 	return &circuit, &assignment, err
 }

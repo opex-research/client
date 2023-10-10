@@ -48,6 +48,7 @@ func CompileCircuit(backend string, circuit frontend.Circuit) (constraint.Constr
 
 func ComputeSetup(backend string, ccs constraint.ConstraintSystem) error {
 
+	// TODO - Use KZG from Ethereum Danksharding Setup procedure, don't use dummy KZG
 	// kzg setup if using plonk
 	var srs kzg.SRS
 	if backend == "plonk" {
