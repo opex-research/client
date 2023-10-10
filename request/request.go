@@ -84,7 +84,7 @@ func (r *RequestTLS) Call(hsOnly bool) (RequestData, error) {
 
 	// local server testing settings
 	if r.ServerDomain == "localhost" {
-		PathCaCrt := "../certs/certificates/ca.crt"
+		PathCaCrt := "certs/certificates/ca.crt"
 
 		// set up cert verification
 		caCert, _ := ioutil.ReadFile(PathCaCrt)
