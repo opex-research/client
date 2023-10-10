@@ -1,0 +1,13 @@
+{
+ "SHTS": "c0ab6040bc2329d70555882a3fc369e25e5daf8d45f1f9e6925d7c4ff81808eb",
+ "SHTSin": "dd539338d6062a209ff5207afde4f2aef985bd2dd261cf3d66a16c1d6a04488e",
+ "hashIvCapp": "ac97bdb6302de00e26319b348fad8e24f90e9dd5b34bf6a764c7677a20c74b72",
+ "hashIvSapp": "0b05f653d7afab9be24202624cfbd9c563262ffc3213e9e392abfac57e40ce6f",
+ "hashKeyCapp": "73d2c1d1905ba5650e129f3a8d19307dee0bc2a7cdf622c115871ca77c956e4a",
+ "hashKeySapp": "96e29840466302b9af1adaacfa3db235607c3d59e2bc01e7157a0c4621b85f70",
+ "intermediateHashCATSipad": "d8403dc7d0f86300b62ed9aef6dc28468b0cff0de6c9f3ec092a77b608a661d8",
+ "intermediateHashHSopad": "cf89f8e5e9bca0b6a9fb3359fb4a754e76bd223d5a3b11337a83806b164c7631",
+ "intermediateHashMSipad": "cec8a78eb440ea89356bc693d317a33c63f124f17e6a02da80c871baa8168098",
+ "intermediateHashSATSipad": "faaa3298ebbad6e6ed40991b63e989202536e2a88b22d3974d5b026c8472fbbb",
+ "intermediateHashdHSipad": "04f4725f41d48ea9a92400c014fda0137721a825d37825eadaf659e61911433e"
+}

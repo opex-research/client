@@ -1,0 +1,15 @@
+{
+ "CATSin": "47c547a42bacf2fc23bb7ffc1528dc8087134a543850314cd0a7817b9afc9a65",
+ "dHSin": "02c059e49f234d593df30ff0907c2bb84a227e64a413c7d453fc63c7d9d92f45",
+ "hashIvCapp": "ac97bdb6302de00e26319b348fad8e24f90e9dd5b34bf6a764c7677a20c74b72",
+ "hashKeyCapp": "73d2c1d1905ba5650e129f3a8d19307dee0bc2a7cdf622c115871ca77c956e4a",
+ "intermediateHashCATSipad": "d8403dc7d0f86300b62ed9aef6dc28468b0cff0de6c9f3ec092a77b608a661d8",
+ "intermediateHashHSipad": "049e9192119f499dd3feb1ab815119e3d4ece03e8e59c539ddb1af2de0b18d51",
+ "intermediateHashHSopad": "cf89f8e5e9bca0b6a9fb3359fb4a754e76bd223d5a3b11337a83806b164c7631",
+ "intermediateHashMSipad": "cec8a78eb440ea89356bc693d317a33c63f124f17e6a02da80c871baa8168098",
+ "intermediateHashdHSipad": "04f4725f41d48ea9a92400c014fda0137721a825d37825eadaf659e61911433e",
+ "ivCAPPin": "f0e27419e36b45d1e1a694101e83ca3eac3fdf8e28d4485115c896ae55b2b759",
+ "ivCapp": "588dd5c83d820ee68d3c06c1",
+ "keyCapp": "8e3535b1dab7b823d5727524a9965f3b",
+ "tkCAPPin": "a044ec7da091e44b008737e033179b3c068c8decaab04a980f31d6620aad7546"
+}

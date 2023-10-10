@@ -1,0 +1,17 @@
+{
+ "MSin": "ca54965fae5d83c1a29c1ec28f6f0a2f773d8be3869f003a38626cb8d8871f39",
+ "SATSin": "5595d9d737af3e30c2e3cef54d34c0b1da9caedae5d8de1ff2ca3f86413e3d97",
+ "SHTSin": "dd539338d6062a209ff5207afde4f2aef985bd2dd261cf3d66a16c1d6a04488e",
+ "dHSin": "02c059e49f234d593df30ff0907c2bb84a227e64a413c7d453fc63c7d9d92f45",
+ "hashIvSapp": "0b05f653d7afab9be24202624cfbd9c563262ffc3213e9e392abfac57e40ce6f",
+ "hashKeySapp": "96e29840466302b9af1adaacfa3db235607c3d59e2bc01e7157a0c4621b85f70",
+ "intermediateHashHSipad": "049e9192119f499dd3feb1ab815119e3d4ece03e8e59c539ddb1af2de0b18d51",
+ "intermediateHashHSopad": "cf89f8e5e9bca0b6a9fb3359fb4a754e76bd223d5a3b11337a83806b164c7631",
+ "intermediateHashMSipad": "cec8a78eb440ea89356bc693d317a33c63f124f17e6a02da80c871baa8168098",
+ "intermediateHashSATSipad": "faaa3298ebbad6e6ed40991b63e989202536e2a88b22d3974d5b026c8472fbbb",
+ "intermediateHashdHSipad": "04f4725f41d48ea9a92400c014fda0137721a825d37825eadaf659e61911433e",
+ "ivSAPPin": "1107440093929c14838671fa96bc79c5dce41ee89af07e6ffffbf6ede2e98c43",
+ "ivSapp": "939bea2a7c3f9ebb44c6b1b5",
+ "keySapp": "107b52d24bd0e89e25fb5026bbd24ff7",
+ "tkSAPPin": "bd52b63734e32479b941f4c60dfcdcc34334c028036a74d7b7b6745f4602759d"
+}
