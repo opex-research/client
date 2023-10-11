@@ -5,12 +5,109 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"net/http"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/rs/zerolog/log"
 )
+
+type CombinedData struct {
+    KDCShared         map[string]interface{} `json:"kdc_shared"`
+    RecordTagPublic   map[string]interface{} `json:"recordtag_public"`
+    RecordDataPublic  map[string]interface{} `json:"recorddata_public"`
+    KDCPublicInput    map[string]interface{} `json:"kdc_public_input"`
+}
+
+func ReadJSONFile(filename string) (map[string]interface{}, error) {
+    data, err := os.ReadFile(filename)
+    if err != nil {
+        return nil, err
+    }
+    var jsonData map[string]interface{}
+    err = json.Unmarshal(data, &jsonData)
+    if err != nil {
+        return nil, err
+    }
+    return jsonData, nil
+}
+
+func SendCombinedDataToProxy(endpoint string, proxyURL string, combinedData *CombinedData) error {
+    jsonData, err := json.Marshal(combinedData)
+    if err != nil {
+        return err
+    }
+
+	// Log the number of bytes being sent
+    log.Debug().Int("bytesSent", len(jsonData)).Msg("Total postprocessing bytes sent to proxy.")
+
+	url := fmt.Sprintf("%s/%s", proxyURL, endpoint)
+	
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return err
+    }
+    log.Debug().Int("bytesReceived", len(body)).Msg("Total postprocessing bytes received from proxy.")
+
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return fmt.Errorf("failed request: %s", body)
+    }
+    return nil
+}
+
+func SendProofToProxy(endpoint string, proxyServerURL string, proofFilePath string) (bool, error) {
+    // Read the proof file
+    proofData, err := os.ReadFile(proofFilePath)
+    if err != nil {
+        log.Error().Err(err).Msgf("Failed to read proof file: %s", proofFilePath)
+        return false, err
+    }
+
+	// Log the number of bytes being sent
+    log.Debug().Int("bytesSent", len(proofData)).Msg("Total size of proof sent to proxy.")
+
+    // Create a new request with the proof data
+    req, err := http.NewRequest(http.MethodPost, proxyServerURL+endpoint, bytes.NewBuffer(proofData))
+    if err != nil {
+        log.Error().Err(err).Msg("Failed to create new request.")
+        return false, err
+    }
+    req.Header.Set("Content-Type", "application/octet-stream")
+
+    // Send the request
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        log.Error().Err(err).Msg("Failed to send request to proxy")
+        return false, err
+    }
+    defer resp.Body.Close()
+
+    // Read the response
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        log.Error().Err(err).Msg("Failed to read response body from proxy")
+        return false, err
+    }
+
+	log.Debug().Int("bytesReceived", len(body)).Msg("Total bytes received from proxy in response to the proof.")
+
+    // Check response status
+    if resp.StatusCode != http.StatusOK {
+        log.Error().Msgf("Proxy responded with status: %s. Message: %s", resp.Status, string(body))
+        return false, fmt.Errorf("Proxy error: %s", string(body))
+    }
+
+    return true, nil
+}
+
 
 func ReadM(filePath string) (map[string]string, error) {
 

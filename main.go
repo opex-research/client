@@ -6,12 +6,8 @@ import (
 	r "client/request"
 	u "client/utils"
 	"time"
-	"fmt"
 
 	"flag"
-	"net/http"
-	"io/ioutil"
-    "encoding/json"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -85,8 +81,38 @@ func main() {
 		handlePostProcessKDC()
 		handlePostProcessRecord()
 
-		success, err := sendRequestToProxy("/postprocess", *proxyServerURL)
-		if !success {
+		// Prepare data to be sent
+		kdcShared, err := u.ReadJSONFile("local_storage/kdc_shared.json")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read kdc_shared.json")
+			return
+		}
+		recordTagPublic, err := u.ReadJSONFile("local_storage/recordtag_public_input.json")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read recordtag_public_input.json")
+			return
+		}
+		recordDataPublic, err := u.ReadJSONFile("local_storage/recorddata_public_input.json")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read recorddata_public_input.json")
+			return
+		}
+		kdcPublicInput, err := u.ReadJSONFile("local_storage/kdc_public_input.json")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to read kdc_public_input.json")
+			return
+		}
+
+		combinedData := &u.CombinedData{
+			KDCShared:        kdcShared,
+			RecordTagPublic:  recordTagPublic,
+			RecordDataPublic: recordDataPublic,
+			KDCPublicInput:   kdcPublicInput,
+		}
+
+		err = u.SendCombinedDataToProxy("postprocess", *proxyServerURL, combinedData)
+
+		if err != nil {
 			log.Error().Err(err).Msg("Failed to complete postprocess on proxy.")
 			return
 		}
@@ -117,8 +143,9 @@ func main() {
 			log.Error().Msg("prv.ComputeProof()")
 		}
 
-		// Send proof to verifier
-		success, err := sendRequestToProxy("/verify", *proxyServerURL)
+		proofFilePath := "local_storage/circuits/oracle_" + backend + ".proof" // Modify this to the correct path
+		success, err := u.SendProofToProxy("/verify", *proxyServerURL, proofFilePath)
+
 		if !success {
 			log.Error().Err(err).Msg("Failed to complete verification on proxy.")
 			return
@@ -262,29 +289,3 @@ func handlePostProcessRecord() {
     elapsed := time.Since(start)
     log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_record time.")
 }
-
-func sendRequestToProxy(endpoint string, proxyServerURL string) (bool, error) {
-    resp, err := http.Get(proxyServerURL + endpoint)
-    if err != nil {
-        log.Error().Err(err).Msg("Failed to send request to proxy")
-        return false, err
-    }
-    defer resp.Body.Close()
-
-    bodyBytes, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        log.Error().Err(err).Msg("Failed to read response body from proxy")
-        return false, err
-    }
-
-    var responseBody map[string]string
-    json.Unmarshal(bodyBytes, &responseBody)
-
-    if resp.StatusCode != http.StatusOK {
-        log.Error().Msgf("Proxy responded with status: %s. Message: %s", resp.Status, responseBody["message"])
-        return false, fmt.Errorf("Proxy error: %s", responseBody["message"])
-    }
-
-    return true, nil
-}
-
