@@ -54,12 +54,19 @@ func SendCombinedDataToProxy(endpoint string, proxyServerURL string, combinedDat
 	if err != nil {
 		return err
 	}
-	log.Debug().Int("bytesReceived", len(body)).Msg("Total postprocessing bytes received from proxy.")
+	log.Debug().Int("bytesReceived", len(body)).Msg("Total postprocessing bytes received from proxy. (Includes prover key)")
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("failed request: %s", body)
 	}
+
+	// Write received data to a file
+	pkPath := "./local_storage/circuits/proof.pk"
+	if err := os.WriteFile(pkPath, body, 0644); err != nil {
+		return fmt.Errorf("failed to write file: %v", err)
+	}
+
 	return nil
 }
 

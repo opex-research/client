@@ -1,7 +1,10 @@
 package prove
 
 import (
+	glg "client/tls-zkp/circuits/gadgets"
 	u "client/utils"
+	"encoding/hex"
+	"strconv"
 
 	"github.com/rs/zerolog/log"
 
@@ -17,6 +20,58 @@ import (
 	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/test"
 )
+
+func GetCircuit() (frontend.Circuit, error) {
+
+	// read data which defines circuit size
+	params, err := readCircuitParams()
+	if err != nil {
+		log.Error().Err(err).Msg("readCircuitParams()")
+		return nil, err
+	}
+
+	// cipher chunks bytes
+	cipherChunksBytes, _ := hex.DecodeString(params["cipher_chunks"])
+	cipherChunksByteLen := len(cipherChunksBytes)
+	// convert str to int
+	sss, _ := strconv.Atoi(params["substring_start"])
+	sse, _ := strconv.Atoi(params["substring_end"])
+	vs, _ := strconv.Atoi(params["value_start"])
+	ve, _ := strconv.Atoi(params["value_end"])
+
+	// var circuit kdcServerKey
+	circuit := glg.Tls13OracleWrapper{
+		PlainChunks:    make([]frontend.Variable, cipherChunksByteLen),
+		CipherChunks:   make([]frontend.Variable, cipherChunksByteLen),
+		Substring:      make([]frontend.Variable, len(params["substring"])),
+		SubstringStart: sss,
+		SubstringEnd:   sse,
+		ValueStart:     vs,
+		ValueEnd:       ve,
+	}
+
+	return &circuit, nil
+}
+
+func readCircuitParams() (map[string]string, error) {
+
+	// to be returned
+	finalMap := make(map[string]string)
+
+	// read in record publ params
+	record_pub, err := u.ReadM("./local_storage/recorddata_public_input.json")
+	if err != nil {
+		log.Error().Msg("u.ReadM")
+		return nil, err
+	}
+
+	// copy
+	for k, v := range record_pub {
+		finalMap[k] = v
+	}
+
+	return finalMap, nil
+}
 
 func CompileCircuit(backend string, circuit frontend.Circuit) (constraint.ConstraintSystem, error) {
 
@@ -48,7 +103,6 @@ func CompileCircuit(backend string, circuit frontend.Circuit) (constraint.Constr
 
 func ComputeSetup(backend string, ccs constraint.ConstraintSystem) error {
 
-	// TODO - Use KZG from Ethereum Danksharding Setup procedure, don't use dummy KZG
 	// kzg setup if using plonk
 	var srs kzg.SRS
 	if backend == "plonk" {

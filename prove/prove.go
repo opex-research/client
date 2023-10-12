@@ -2,8 +2,6 @@ package prove
 
 import (
 	"encoding/hex"
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -17,7 +15,6 @@ import (
 	// "github.com/consensys/gnark-crypto/kzg"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/backend/plonk"
-	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/frontend"
 )
 
@@ -179,7 +176,6 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	log.Trace().Msgf("chipherChunksAssign: %v", chipherChunksAssign)
 	log.Trace().Msgf("ivAssign: %v", ivAssign)
 
-
 	return &circuit, &assignment, err
 }
 
@@ -285,47 +281,37 @@ func ComputeProof(backend string, assignment frontend.Circuit) error {
 		log.Error().Msg("frontend.NewWitness")
 		return err
 	}
-	publicWitness, _ := w.Public()
-	// fmt.Println("pub witness:", publicWitness)
-
-	// Binary [de]serialization
-	data, _ := publicWitness.MarshalBinary()
-
-	fo, _ := os.Create("./local_storage/circuits/oracle.pubwit")
-	fo.Write(data[:])
-	// u.Serialize(data, "./local_storage/circuits/oracle.pubwit")
-
-	reconstructed, _ := witness.New(ecc.BN254.ScalarField())
-	reconstructed.UnmarshalBinary(data)
-
-	// For pretty printing, we can do JSON conversions; they are not efficient and don't handle
-	// complex circuit structures well.
-
-	// first get the circuit expected schema
-	schema, _ := frontend.NewSchema(assignment)
-	json, _ := reconstructed.ToJSON(schema)
-
-	fmt.Println(string(json))
 
 	switch backend {
 	case "groth16":
 
-		// read R1CS, proving key and verifying keys
-		ccs := groth16.NewCS(ecc.BN254)
+		circuit, err := GetCircuit()
+		if err != nil {
+			log.Error().Msg("groth16 GetCircuit")
+			return err
+		}
+
+		backend := "groth16"
+		ccs, err := CompileCircuit(backend, circuit)
+		if err != nil {
+			log.Error().Msg("groth16 CompileCircuit")
+			return err
+		}
+
 		pk := groth16.NewProvingKey(ecc.BN254)
-		// vk := groth16.NewVerifyingKey(ecc.BN254)
-		u.Deserialize(ccs, "../proxy/local_storage/circuits/oracle_"+backend+".ccs")
-		u.Deserialize(pk, "../proxy/local_storage/circuits/oracle_"+backend+".pk")
-		// u.Deserialize(vk, "./local_storage/circuits/oracle_"+backend+".vk")
+		u.Deserialize(pk, "./local_storage/circuits/proof.pk")
 
 		proof, err := groth16.Prove(ccs, pk, w)
 		if err != nil {
 			log.Error().Msg("groth16.Prove")
 			return err
 		}
-		u.Serialize(proof, "./local_storage/circuits/oracle_"+backend+".proof")
 
+		u.Serialize(proof, "./local_storage/circuits/oracle_"+backend+".proof")
 	case "plonk":
+
+		// TODO - Update for remote communication
+		// In Plonk, we should be able to run the deterministic setup locally
 
 		// read in values...
 		ccs := plonk.NewCS(ecc.BN254)
