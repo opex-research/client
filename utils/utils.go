@@ -33,7 +33,7 @@ func ReadJSONFile(filename string) (map[string]interface{}, error) {
     return jsonData, nil
 }
 
-func SendCombinedDataToProxy(endpoint string, proxyURL string, combinedData *CombinedData) error {
+func SendCombinedDataToProxy(endpoint string, proxyServerURL string, combinedData *CombinedData) error {
     jsonData, err := json.Marshal(combinedData)
     if err != nil {
         return err
@@ -42,7 +42,7 @@ func SendCombinedDataToProxy(endpoint string, proxyURL string, combinedData *Com
 	// Log the number of bytes being sent
     log.Debug().Int("bytesSent", len(jsonData)).Msg("Total postprocessing bytes sent to proxy.")
 
-	url := fmt.Sprintf("%s/%s", proxyURL, endpoint)
+	url := fmt.Sprintf("http://%s/%s", proxyServerURL, endpoint)
 	
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
     if err != nil {
@@ -74,8 +74,10 @@ func SendProofToProxy(endpoint string, proxyServerURL string, proofFilePath stri
 	// Log the number of bytes being sent
     log.Debug().Int("bytesSent", len(proofData)).Msg("Total size of proof sent to proxy.")
 
+	url := fmt.Sprintf("http://%s%s", proxyServerURL, endpoint)
+
     // Create a new request with the proof data
-    req, err := http.NewRequest(http.MethodPost, proxyServerURL+endpoint, bytes.NewBuffer(proofData))
+    req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(proofData))
     if err != nil {
         log.Error().Err(err).Msg("Failed to create new request.")
         return false, err
