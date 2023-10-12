@@ -51,10 +51,9 @@ func main() {
 	flag.Parse()
 
 	if *proxyServerURL == "" {
-        log.Error().Msg("proxyServerURL not set. Please provide the -proxyserver flag.")
-        return
-    }
-	
+		log.Error().Msg("proxyServerURL not set. Please provide the -proxyserver flag.")
+		return
+	}
 
 	// Set the default log level to Disabled
 	zerolog.SetGlobalLevel(zerolog.Disabled)
@@ -67,9 +66,8 @@ func main() {
 		log.Trace().Msg("Debugging activated.")
 	}
 
-
 	if *request {
-		
+
 		if *proxyListenerURL == "" {
 			log.Error().Msg("proxyListenerURL not set. Please provide the -proxylistener flag.")
 			return
@@ -123,11 +121,11 @@ func main() {
 		durationPostProcess := endTimePostProcess.Sub(startTime)
 
 		// 4) Log the duration
-		log.Info().Str("duration", durationPostProcess.String()).Msg("Total time taken from the start of the request, sending /postprocess to proxy & receiving a response from proxy.")	
+		log.Info().Str("duration", durationPostProcess.String()).Msg("Total time taken from the start of the request, sending /postprocess to proxy & receiving a response from proxy.")
 	}
 
 	if *prove {
-		
+
 		startTime := time.Now()
 
 		// get witness
@@ -157,10 +155,9 @@ func main() {
 		durationProve := endTimeProve.Sub(startTime)
 
 		// 4) Log the duration
-		log.Info().Str("duration", durationProve.String()).Msg("Total time taken to create the proof, sending /verify to proxy & receiving a response from proxy.")	
+		log.Info().Str("duration", durationProve.String()).Msg("Total time taken to create the proof, sending /verify to proxy & receiving a response from proxy.")
 
 	}
-	
 
 	// call setup
 	if *setup {
@@ -194,21 +191,21 @@ func main() {
 }
 
 func handleRequest(hsonly bool, serverDomain string, serverEndpoint string, proxyListenerURL string) {
-    req := r.NewRequest(serverDomain, serverEndpoint, proxyListenerURL)
-    data, err := req.Call(hsonly)
-    if err != nil {
-        log.Error().Msg("req.Call()")
-    }
-    if !hsonly {
-        err = req.Store(data)
-        if err != nil {
-            log.Error().Msg("req.Store(data)")
-        }
-    }
+	req := r.NewRequest(serverDomain, serverEndpoint, proxyListenerURL)
+	data, err := req.Call(hsonly)
+	if err != nil {
+		log.Error().Msg("req.Call()")
+	}
+	if !hsonly {
+		err = req.Store(data)
+		if err != nil {
+			log.Error().Msg("req.Store(data)")
+		}
+	}
 }
 
 func handlePostProcessKDC() {
-    start := time.Now()
+	start := time.Now()
 
 	// read in session data
 	toBshared, err := pp.Read()
@@ -252,14 +249,14 @@ func handlePostProcessKDC() {
 	}
 
 	elapsed := time.Since(start)
-    log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_kdc time.")
+	log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_kdc time.")
 }
 
 func handlePostProcessRecord() {
 
-	start := time.Now()  // Add this line
+	start := time.Now() // Add this line
 
-    // authentication tag
+	// authentication tag
 	/////////////////////
 	recordPerSequence, err := pp.ReadServerRecords()
 	if err != nil {
@@ -286,6 +283,6 @@ func handlePostProcessRecord() {
 		log.Error().Msg("pp.ParsePlaintextWithPolicy")
 	}
 
-    elapsed := time.Since(start)
-    log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_record time.")
+	elapsed := time.Since(start)
+	log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_record time.")
 }
