@@ -24,6 +24,9 @@ func main() {
 	// Measurement flag
 	measure := flag.Bool("measure", false, "enable measurement logs")
 
+	// checks for -server flag
+	server := flag.String("server", "local", "server to connect to.")
+
 	// checks for -request flag
 	request := flag.Bool("request", false, "send request to server.")
 
@@ -75,7 +78,14 @@ func main() {
 
 		startTime := time.Now()
 
-		handleRequest(*hsonly, *serverDomain, *serverEndpoint, *proxyListenerURL)
+		if *server == "local" {
+			handleRequest(*hsonly, *serverDomain, *serverEndpoint, *proxyListenerURL)
+		}
+
+		if *server == "paypal" {
+			handlePaypalRequest(*serverDomain, *serverEndpoint, *proxyListenerURL)
+		}
+
 		handlePostProcessKDC()
 		handlePostProcessRecord()
 
@@ -187,6 +197,28 @@ func main() {
 		if err != nil {
 			log.Error().Msg("u.ZkStats()")
 		}
+	}
+}
+
+func handlePaypalRequest(serverDomain string, serverEndpoint string, proxyListenerURL string) {
+
+	config := &r.PaypalConfig{
+		ReferenceID: "testReferenceID",
+		AmountValue: "100.00",
+		ReturnURL:   "https://example.com/return",
+		CancelURL:   "https://example.com/cancel",
+	}
+
+	requestTLS := r.NewRequestPayPal(serverDomain, serverEndpoint, proxyListenerURL, config)
+
+	// TODO - Replace the bearer token with the one you get from PayPal.
+	requestTLS.AccessToken = "Bearer A21AAJ_wxwIt0-LYpJ5liuVeSr9slsX8j64hwIWxQHMsAwsJo1NX0LSo8nbSnoRKBRdKaKE6oHy_PnMtpaD9xjMVC4VJ93skA"
+	realPaypalRequestID := "7b92603e-77ed-4896-8e78-5dea2050476a"
+
+	err := requestTLS.PostToPaypal(realPaypalRequestID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to post to PayPal.")
+		return
 	}
 }
 
