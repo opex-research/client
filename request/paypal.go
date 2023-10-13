@@ -1,9 +1,12 @@
 package request
 
 import (
+	"bufio"
 	"bytes"
+	tls "client/tls-fork"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -14,6 +17,105 @@ type PaypalConfig struct {
 	AmountValue string
 	ReturnURL   string
 	CancelURL   string
+}
+
+type RequestTLSPayPal struct {
+	ServerDomain    string
+	ServerPath      string
+	ProxyURL        string
+	UrlPrivateParts string
+	AccessToken     string
+	StorageLocation string
+	PaypalConfig    *PaypalConfig // Add this for paypal specific data
+}
+
+func NewRequestPayPal(serverDomain string, serverPath string, proxyURL string, paypalConfig *PaypalConfig) RequestTLSPayPal {
+	return RequestTLSPayPal{
+		ServerDomain:    serverDomain,
+		ServerPath:      serverPath, // "testserver.origodata.io"
+		ProxyURL:        proxyURL,
+		UrlPrivateParts: "",
+		AccessToken:     "",
+		StorageLocation: "./local_storage/",
+		PaypalConfig:    paypalConfig, // Set the paypal configuration
+	}
+}
+
+func (r *RequestTLSPayPal) PostToPaypal(paypalRequestID string) error {
+	body := NewPaypalRequest(r.PaypalConfig)
+
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	// tls configs
+	config := &tls.Config{
+		InsecureSkipVerify:       false,
+		CurvePreferences:         []tls.CurveID{tls.CurveP256},
+		PreferServerCipherSuites: false,
+		MinVersion:               tls.VersionTLS13,
+		MaxVersion:               tls.VersionTLS13,
+		CipherSuites: []uint16{
+			tls.TLS_AES_128_GCM_SHA256,
+		},
+		ServerName: r.ServerDomain,
+	}
+
+	// Establish a TLS connection to the proxy
+	conn, err := tls.Dial("tcp", r.ProxyURL, config)
+	if err != nil {
+		log.Error().Err(err).Msg("tls.Dial()")
+		return err
+	}
+	defer conn.Close()
+
+	// Construct the HTTP request
+	endpoint := "https://" + r.ServerDomain + r.ServerPath
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(jsonBody))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("PayPal-Request-Id", paypalRequestID)
+	req.Header.Set("Authorization", r.AccessToken)
+
+	// Use bufio to send the HTTP request over the TLS connection
+	bufr := bufio.NewReader(conn)
+	bufw := bufio.NewWriter(conn)
+
+	err = req.Write(bufw)
+	if err != nil {
+		log.Error().Err(err).Msg("request.Write(bufw)")
+		return err
+	}
+
+	err = bufw.Flush()
+	if err != nil {
+		log.Error().Err(err).Msg("bufw.Flush()")
+		return err
+	}
+
+	// Read the HTTP response
+	resp, err := http.ReadResponse(bufr, req)
+	if err != nil {
+		log.Error().Err(err).Msg("http.ReadResponse(bufr, request)")
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Handle the HTTP response (in this example, we'll just log it)
+	msg, _ := ioutil.ReadAll(resp.Body)
+	log.Trace().Msg("PayPal response data:")
+	log.Trace().Msg(string(msg))
+
+	if resp.StatusCode != http.StatusOK {
+		log.Error().Msgf("Failed to post to PayPal with status: %s", resp.Status)
+		return fmt.Errorf("Failed to post to PayPal with status: %s", resp.Status)
+	}
+
+	return nil
 }
 
 type UnitAmount struct {
@@ -95,7 +197,7 @@ func NewPaypalRequest(config *PaypalConfig) *PaypalRequestBody {
 	}
 }
 
-func PostToPaypal(endpoint string, paypalRequestID string, bearerToken string, config *PaypalConfig) error {
+func RequestPaypalNoProxy(endpoint string, paypalRequestID string, bearerToken string, config *PaypalConfig) error {
 	body := NewPaypalRequest(config)
 
 	jsonBody, err := json.Marshal(body)

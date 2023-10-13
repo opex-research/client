@@ -11,6 +11,28 @@ import (
 // REPLACE Bearer Token for testing
 const paypalEndpoint = "https://api-m.sandbox.paypal.com/v2/checkout/orders"
 const bearerToken = "Bearer A21AAJ_wxwIt0-LYpJ5liuVeSr9slsX8j64hwIWxQHMsAwsJo1NX0LSo8nbSnoRKBRdKaKE6oHy_PnMtpaD9xjMVC4VJ93skA"
+const proxyURL = "localhost:8082" // replace with your actual proxy URL
+
+func TestPostToPaypal(t *testing.T) {
+	const serverDomain = "api-m.sandbox.paypal.com"
+	const serverPath = "/v2/checkout/orders"
+	const realPaypalRequestID = "7b92603e-77ed-4896-8e78-5dea2050476a" // you may want to generate a new ID every time
+
+	config := &PaypalConfig{
+		ReferenceID: "testReferenceID",
+		AmountValue: "100.00",
+		ReturnURL:   "https://example.com/return",
+		CancelURL:   "https://example.com/cancel",
+	}
+
+	requestTLS := NewRequestPayPal(serverDomain, serverPath, proxyURL, config)
+	requestTLS.AccessToken = bearerToken
+
+	err := requestTLS.PostToPaypal(realPaypalRequestID)
+	if err != nil {
+		t.Fatalf("PostToPaypal failed: %v", err)
+	}
+}
 
 func TestPaypalAPIConnection(t *testing.T) {
 	// Setup the PayPal request
@@ -56,7 +78,7 @@ func TestPaypalAPIConnection(t *testing.T) {
 	}
 }
 
-func TestPostToPaypalRealServer(t *testing.T) {
+func TestRequestPaypalNoProxy(t *testing.T) {
 	const realEndpoint = "https://api-m.sandbox.paypal.com/v2/checkout/orders"
 	const realPaypalRequestID = "7b92603e-77ed-4896-8e78-5dea2050476a" // you may want to generate a new ID every time
 
@@ -67,7 +89,7 @@ func TestPostToPaypalRealServer(t *testing.T) {
 		CancelURL:   "https://example.com/cancel",
 	}
 
-	err := PostToPaypal(realEndpoint, realPaypalRequestID, bearerToken, config)
+	err := RequestPaypalNoProxy(realEndpoint, realPaypalRequestID, bearerToken, config)
 	if err != nil {
 		t.Fatalf("PostToPaypal failed: %v", err)
 	}
