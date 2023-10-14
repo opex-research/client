@@ -2,6 +2,8 @@ package prove
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"os"
 	"strconv"
 	"strings"
 
@@ -18,6 +20,25 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
+func saveParamsToFile(params map[string]string) error {
+	// Convert params into JSON formatted bytes
+	data, err := json.MarshalIndent(params, "", "    ") // Indented for readability
+	if err != nil {
+		return err
+	}
+
+	// Create and open a new file for writing
+	file, err := os.Create("./local_storage/final_params.json")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the JSON data to the file
+	_, err = file.Write(data)
+	return err
+}
+
 func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 
 	// read in data
@@ -25,6 +46,12 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	if err != nil {
 		log.Error().Msg("readOracleParams()")
 		return nil, nil, err
+	}
+
+	// Save parameters to file
+	err = saveParamsToFile(params)
+	if err != nil {
+		log.Error().Err(err).Msg("Error saving parameters to final_params.json.")
 	}
 
 	// further preprocessing
@@ -37,7 +64,7 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	valueStart, _ := strconv.Atoi(params["value_start"])
 	valueEnd, _ := strconv.Atoi(params["value_end"])
 	// !!! policy value !!!
-	threshold := 38001
+	threshold := 100
 
 	// kdc to bytes
 	byteSlice, _ := hex.DecodeString(params["intermediateHashHSopad"])

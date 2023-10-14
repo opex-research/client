@@ -207,7 +207,7 @@ func handlePaypalRequest(hsonly bool, serverDomain string, serverEndpoint string
 
 	config := &r.PaypalConfig{
 		ReferenceID: "testReferenceID",
-		AmountValue: "100.00",
+		AmountValue: "38002.2",
 		ReturnURL:   "https://example.com/return",
 		CancelURL:   "https://example.com/cancel",
 	}

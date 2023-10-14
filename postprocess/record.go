@@ -101,6 +101,9 @@ func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) e
 		jsonData["value_start"] = strconv.Itoa(start_idx_chunks + sizeAreaOfInterest - policy.ValueLength - 1)
 		jsonData["value_end"] = strconv.Itoa(start_idx_chunks + sizeAreaOfInterest - 1)
 		log.Debug().Str("string", string(plaintextBytes[startIdxAreaOfInterest:startIdxAreaOfInterest+sizeAreaOfInterest])).Msg("area of interest")
+		log.Debug().Str("plain_chunks", string(policy.Substring)).Msg("Logged plain_chunks.")
+		log.Debug().Str("plain_chunks", string(policy.ValueStartIdxAfterSS)).Msg("Logged plain_chunks.")
+		log.Debug().Str("plain_chunks", string(policy.ValueLength)).Msg("Logged plain_chunks.")
 	}
 
 	err = u.StoreM(jsonData, "recorddata_public_input")

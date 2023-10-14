@@ -2,6 +2,6 @@
     "substring": "\"value\"",
     "value_start_idx_after_ss": 3,
     "value_length": 3,
-    "threshold_value": "100",
+    "threshold_value": "30001",
     "value_constraint": "GT"
 }
