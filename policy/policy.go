@@ -16,20 +16,22 @@ type Policy struct {
 	ValueConstraint      string `json:"value_constraint"`
 }
 
-func New() (Policy, error) {
+func New(policyFilePath string) (Policy, error) {
 	// open file
-	file, err := os.Open("policy/policy.json")
+	file, err := os.Open(policyFilePath)
 	if err != nil {
 		log.Error().Err(err).Msg("os.Open")
 		return Policy{}, err
 	}
 	defer file.Close()
+
 	// read in data
 	data, err := io.ReadAll(file)
 	if err != nil {
 		log.Error().Err(err).Msg("io.ReadAll(file)")
 		return Policy{}, err
 	}
+
 	// parse json into policy struct
 	var policy Policy
 	err = json.Unmarshal(data, &policy)
@@ -37,5 +39,6 @@ func New() (Policy, error) {
 		log.Error().Err(err).Msg("json.Unmarshal(data, &objmap)")
 		return Policy{}, err
 	}
+
 	return policy, nil
 }

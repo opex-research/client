@@ -10,7 +10,7 @@ import (
 
 // REPLACE Bearer Token for testing
 const paypalEndpoint = "https://api-m.sandbox.paypal.com/v2/checkout/orders"
-const bearerToken = "Bearer A21AAJ_wxwIt0-LYpJ5liuVeSr9slsX8j64hwIWxQHMsAwsJo1NX0LSo8nbSnoRKBRdKaKE6oHy_PnMtpaD9xjMVC4VJ93skA"
+const bearerToken = "Bearer A21AAJO_X_tspTo_FurV9rmbralkTpfCii0HdKf8Lyvcpowr3TVqc55ORHhRazykkbdKqh0sCH3vLc3bwB2yXJ5Hpn81MbFsw"
 const proxyURL = "localhost:8082" // replace with your actual proxy URL
 
 func TestPostToPaypal(t *testing.T) {
@@ -19,7 +19,7 @@ func TestPostToPaypal(t *testing.T) {
 	const realPaypalRequestID = "7b92603e-77ed-4896-8e78-5dea2050476a" // you may want to generate a new ID every time
 
 	config := &PaypalConfig{
-		ReferenceID: "testReferenceID",
+		ReferenceID: "default",
 		AmountValue: "100.00",
 		ReturnURL:   "https://example.com/return",
 		CancelURL:   "https://example.com/cancel",
@@ -28,16 +28,20 @@ func TestPostToPaypal(t *testing.T) {
 	requestTLS := NewRequestPayPal(serverDomain, serverPath, proxyURL, config)
 	requestTLS.AccessToken = bearerToken
 
-	err := requestTLS.PostToPaypal(realPaypalRequestID)
+	data, err := requestTLS.PostToPaypal(true, realPaypalRequestID)
 	if err != nil {
 		t.Fatalf("PostToPaypal failed: %v", err)
+	}
+	err = requestTLS.Store(data)
+	if err != nil {
+		t.Fatalf("Store data failed: %v", err)
 	}
 }
 
 func TestPaypalAPIConnection(t *testing.T) {
 	// Setup the PayPal request
 	config := &PaypalConfig{
-		ReferenceID: "testReferenceID",
+		ReferenceID: "default",
 		AmountValue: "100.00",
 		ReturnURL:   "https://example.com/return",
 		CancelURL:   "https://example.com/cancel",
@@ -83,7 +87,7 @@ func TestRequestPaypalNoProxy(t *testing.T) {
 	const realPaypalRequestID = "7b92603e-77ed-4896-8e78-5dea2050476a" // you may want to generate a new ID every time
 
 	config := &PaypalConfig{
-		ReferenceID: "testReferenceID",
+		ReferenceID: "default",
 		AmountValue: "100.00",
 		ReturnURL:   "https://example.com/return",
 		CancelURL:   "https://example.com/cancel",

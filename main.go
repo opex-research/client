@@ -83,31 +83,34 @@ func main() {
 		}
 
 		if *server == "paypal" {
-			handlePaypalRequest(*serverDomain, *serverEndpoint, *proxyListenerURL)
+			handlePaypalRequest(*hsonly, *serverDomain, *serverEndpoint, *proxyListenerURL)
 		}
 
 		handlePostProcessKDC()
-		handlePostProcessRecord()
+		handlePostProcessRecord(*server)
 
 		// Prepare data to be sent
-		kdcShared, err := u.ReadJSONFile("local_storage/kdc_shared.json")
+		kdcShared, err := u.ReadAndCheckFile("local_storage/kdc_shared.json")
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to read kdc_shared.json")
+			log.Error().Err(err)
 			return
 		}
-		recordTagPublic, err := u.ReadJSONFile("local_storage/recordtag_public_input.json")
+
+		recordTagPublic, err := u.ReadAndCheckFile("local_storage/recordtag_public_input.json")
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to read recordtag_public_input.json")
+			log.Error().Err(err)
 			return
 		}
-		recordDataPublic, err := u.ReadJSONFile("local_storage/recorddata_public_input.json")
+
+		recordDataPublic, err := u.ReadAndCheckFile("local_storage/recorddata_public_input.json")
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to read recorddata_public_input.json")
+			log.Error().Err(err)
 			return
 		}
-		kdcPublicInput, err := u.ReadJSONFile("local_storage/kdc_public_input.json")
+
+		kdcPublicInput, err := u.ReadAndCheckFile("local_storage/kdc_public_input.json")
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to read kdc_public_input.json")
+			log.Error().Err(err)
 			return
 		}
 
@@ -200,7 +203,7 @@ func main() {
 	}
 }
 
-func handlePaypalRequest(serverDomain string, serverEndpoint string, proxyListenerURL string) {
+func handlePaypalRequest(hsonly bool, serverDomain string, serverEndpoint string, proxyListenerURL string) {
 
 	config := &r.PaypalConfig{
 		ReferenceID: "testReferenceID",
@@ -212,13 +215,19 @@ func handlePaypalRequest(serverDomain string, serverEndpoint string, proxyListen
 	requestTLS := r.NewRequestPayPal(serverDomain, serverEndpoint, proxyListenerURL, config)
 
 	// TODO - Replace the bearer token with the one you get from PayPal.
-	requestTLS.AccessToken = "Bearer A21AAJ_wxwIt0-LYpJ5liuVeSr9slsX8j64hwIWxQHMsAwsJo1NX0LSo8nbSnoRKBRdKaKE6oHy_PnMtpaD9xjMVC4VJ93skA"
+	requestTLS.AccessToken = "Bearer A21AAJO_X_tspTo_FurV9rmbralkTpfCii0HdKf8Lyvcpowr3TVqc55ORHhRazykkbdKqh0sCH3vLc3bwB2yXJ5Hpn81MbFsw"
 	realPaypalRequestID := "7b92603e-77ed-4896-8e78-5dea2050476a"
 
-	err := requestTLS.PostToPaypal(realPaypalRequestID)
+	data, err := requestTLS.PostToPaypal(true, realPaypalRequestID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to post to PayPal.")
 		return
+	}
+	if !hsonly {
+		err = requestTLS.Store(data)
+		if err != nil {
+			log.Error().Msg("req.Store(data)")
+		}
 	}
 }
 
@@ -284,7 +293,7 @@ func handlePostProcessKDC() {
 	log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_kdc time.")
 }
 
-func handlePostProcessRecord() {
+func handlePostProcessRecord(server string) {
 
 	start := time.Now() // Add this line
 
@@ -310,7 +319,7 @@ func handlePostProcessRecord() {
 
 	// policy based public input extraction for record layer data
 	// stores parameters in recorddata_public_input.json
-	err = pp.ParsePlaintextWithPolicy(recordPerSequence)
+	err = pp.ParsePlaintextWithPolicy(server, recordPerSequence)
 	if err != nil {
 		log.Error().Msg("pp.ParsePlaintextWithPolicy")
 	}

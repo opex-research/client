@@ -4,7 +4,6 @@ import (
 	"crypto/aes"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
 	"strconv"
@@ -16,14 +15,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func ParsePlaintextWithPolicy(rps map[string]map[string]string) error {
+// TODO: move to config, improve policy handling
+var serverPolicyPaths = map[string]string{
+	"local":  "policy/policy.json",
+	"paypal": "policy/policy_paypal.json",
+}
+
+func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) error {
 
 	// init values
 	found := false
 
 	// get policy
-	policy, err := p.New()
+	policy, err := p.New(serverPolicyPaths[server])
+	log.Debug().Msgf("Policy: %s", policy)
+
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialize policy")
 		return err
 	}
 
@@ -35,21 +43,32 @@ func ParsePlaintextWithPolicy(rps map[string]map[string]string) error {
 	for _, record := range rps {
 
 		// loop over plaintext 16b chunks
-		plaintextBytes, _ := hex.DecodeString(record["payload"])
+		plaintextBytes, err := hex.DecodeString(record["payload"])
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to decode hex for record payload")
+			return err
+		}
+
 		plaintext := string(plaintextBytes)
 
+		log.Debug().Msgf("Processing plaintext: %s", plaintext)
+
 		// to capture ciphertext_chunks if match found
-		ciphertextBytes, _ := hex.DecodeString(record["ciphertext"])
+		ciphertextBytes, err := hex.DecodeString(record["ciphertext"])
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to decode hex for record ciphertext")
+			return err
+		}
 
 		// check if substring exists
-		// done on full plaintext because chunking might prevent substring match detection
 		var startIdxAreaOfInterest, endIdxAreaOfInterest, chunkIndex int
 		found = strings.Contains(plaintext, policy.Substring)
 		if found {
 			startIdxAreaOfInterest = strings.Index(plaintext, policy.Substring)
 			endIdxAreaOfInterest = startIdxAreaOfInterest + len(policy.Substring) + policy.ValueStartIdxAfterSS + policy.ValueLength
 		} else {
-			return errors.New("could not find any substring match")
+			log.Error().Msg("Substring match not found in plaintext")
+			continue // Skip to the next record in rps
 		}
 
 		// area of interest used to identify the number of chunks that must be decrypted

@@ -33,6 +33,17 @@ func ReadJSONFile(filename string) (map[string]interface{}, error) {
 	return jsonData, nil
 }
 
+func ReadAndCheckFile(filePath string) (map[string]interface{}, error) {
+	content, err := ReadJSONFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read %s: %w", filePath, err)
+	}
+	if len(content) == 0 {
+		return nil, fmt.Errorf("%s is empty", filePath)
+	}
+	return content, nil
+}
+
 func SendCombinedDataToProxy(endpoint string, proxyServerURL string, combinedData *CombinedData) error {
 	jsonData, err := json.Marshal(combinedData)
 	if err != nil {
@@ -193,16 +204,37 @@ func ReadMM(filePath string) (map[string]string, error) {
 
 func StoreM(jsonData map[string]string, filename string) error {
 
+	if len(jsonData) == 0 {
+		log.Error().Msg("jsonData is empty, not writing to file.")
+		return fmt.Errorf("jsonData is empty")
+	}
+
 	file, err := json.MarshalIndent(jsonData, "", " ")
 	if err != nil {
 		log.Error().Err(err).Msg("json.MarshalIndent")
 		return err
 	}
-	err = os.WriteFile("./local_storage/"+filename+".json", file, 0644)
+
+	filepath := "./local_storage/" + filename + ".json"
+	err = os.WriteFile(filepath, file, 0644)
 	if err != nil {
 		log.Error().Err(err).Msg("os.WriteFile")
 		return err
 	}
+
+	// Read the file to check if it's empty
+	storedData, err := os.ReadFile(filepath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading back the stored file for verification")
+		return err
+	}
+
+	if len(storedData) == 0 {
+		log.Error().Msgf("%s is empty after write", filepath)
+		return fmt.Errorf("%s is empty after write", filepath)
+	}
+
+	log.Debug().Msgf("%s written and verified successfully", filepath)
 	return nil
 }
 
@@ -347,4 +379,17 @@ func getFileInfo(filePath string) (os.FileInfo, error) {
 		return nil, err
 	}
 	return fi, nil
+}
+
+// prettyWriteJson beautifies the JSON data and writes it to the specified filePath.
+func PrettyWriteJson(data []byte, filePath string) error {
+	// Beautify the JSON
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// Write the beautified JSON to the file
+	return os.WriteFile(filePath, prettyJSON.Bytes(), 0644)
 }
