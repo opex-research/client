@@ -39,7 +39,7 @@ func saveParamsToFile(params map[string]string) error {
 	return err
 }
 
-func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
+func CircuitAssign(thresholdValue string) (frontend.Circuit, frontend.Circuit, error) {
 
 	// read in data
 	params, err := readOracleParams()
@@ -54,20 +54,33 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 		log.Error().Err(err).Msg("Error saving parameters to final_params.json.")
 	}
 
+	byteSlice, _ := hex.DecodeString(params["sequence_number"])
+	sequenceNumberByteLen := len(byteSlice)
+
 	// further preprocessing
 	zeros := "00000000000000000000000000000000"
 	ivCounter := addCounter(params["ivSapp"])
+	log.Debug().Msgf("Converted threshold value: %v", ivCounter)
 	newdHSin, dHSinByteLen := padDHSin(params["dHSin"])
 	chunkIndex, _ := strconv.Atoi(params["chunk_index"])
 	substringStart, _ := strconv.Atoi(params["substring_start"])
 	substringEnd, _ := strconv.Atoi(params["substring_end"])
 	valueStart, _ := strconv.Atoi(params["value_start"])
 	valueEnd, _ := strconv.Atoi(params["value_end"])
-	// !!! policy value !!!
-	threshold := 100
+
+	threshold, err := strconv.Atoi(thresholdValue)
+
+	// Debug log the threshold value
+	log.Debug().Msgf("Converted threshold value: %d", threshold)
+
+	if err != nil {
+		// handle the error appropriately, e.g., return or log it
+		log.Error().Err(err).Msg("Error converting thresholdValue to int.")
+		return nil, nil, err
+	}
 
 	// kdc to bytes
-	byteSlice, _ := hex.DecodeString(params["intermediateHashHSopad"])
+	byteSlice, _ = hex.DecodeString(params["intermediateHashHSopad"])
 	intermediateHashHSopadByteLen := len(byteSlice)
 	byteSlice, _ = hex.DecodeString(params["MSin"])
 	MSinByteLen := len(byteSlice)
@@ -93,6 +106,8 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	plainChunksByteLen := len(byteSlice)
 	substringByteLen := len(params["substring"])
 
+	log.Debug().Msgf("sequenceNumberAssign: %v", byteSlice)
+
 	// witness definition kdc
 	intermediateHashHSopadAssign := glibg.StrToIntSlice(params["intermediateHashHSopad"], true)
 	dHSinAssign := glibg.StrToIntSlice(newdHSin, true)
@@ -110,6 +125,7 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	chipherChunksAssign := glibg.StrToIntSlice(params["cipher_chunks"], true)
 	plainChunksAssign := glibg.StrToIntSlice(params["plain_chunks"], true)
 	substringAssign := glibg.StrToIntSlice(params["substring"], false)
+	sequenceNumberAssign := glibg.StrToIntSlice(params["sequence_number"], true)
 
 	// witness values preparation
 	assignment := glibg.Tls13OracleWrapper{
@@ -136,6 +152,7 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 		ValueStart:     valueStart,
 		ValueEnd:       valueEnd,
 		Threshold:      threshold,
+		SequenceNumber: [8]frontend.Variable{},
 	}
 
 	// kdc assign
@@ -154,6 +171,8 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	for i := 0; i < tkSAPPinByteLen; i++ {
 		assignment.TkSAPPin[i] = tkSAPPinAssign[i]
 	}
+	log.Debug().Msgf("ivCounterByteLen: %v", ivCounterByteLen)
+	log.Debug().Msgf("ivCounterAssign: %v", ivCounterAssign)
 	// authtag assign
 	for i := 0; i < ivCounterByteLen; i++ {
 		assignment.IvCounter[i] = ivCounterAssign[i]
@@ -180,6 +199,9 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 	for i := 0; i < substringByteLen; i++ {
 		assignment.Substring[i] = substringAssign[i]
 	}
+	for i := 0; i < sequenceNumberByteLen; i++ {
+		assignment.SequenceNumber[i] = sequenceNumberAssign[i]
+	}
 
 	// var circuit kdcServerKey
 	circuit := glibg.Tls13OracleWrapper{
@@ -192,16 +214,17 @@ func CircuitAssign() (frontend.Circuit, frontend.Circuit, error) {
 		ValueEnd:       valueEnd,
 	}
 
-	log.Trace().Msgf("intermediateHashHSopadAssign: %v", intermediateHashHSopadAssign)
-	log.Trace().Msgf("dHSinAssign: %v", dHSinAssign)
-	log.Trace().Msgf("MSinAssign: %v", MSinAssign)
-	log.Trace().Msgf("SATSinAssign: %v", SATSinAssign)
-	log.Trace().Msgf("tkSAPPinAssign: %v", tkSAPPinAssign)
-	log.Trace().Msgf("ivCounterAssign: %v", ivCounterAssign)
-	log.Trace().Msgf("ecbkAssign: %v", ecbkAssign)
-	log.Trace().Msgf("ecb0Assign: %v", ecb0Assign)
-	log.Trace().Msgf("chipherChunksAssign: %v", chipherChunksAssign)
-	log.Trace().Msgf("ivAssign: %v", ivAssign)
+	log.Debug().Msgf("intermediateHashHSopadAssign: %v", intermediateHashHSopadAssign)
+	log.Debug().Msgf("dHSinAssign: %v", dHSinAssign)
+	log.Debug().Msgf("MSinAssign: %v", MSinAssign)
+	log.Debug().Msgf("SATSinAssign: %v", SATSinAssign)
+	log.Debug().Msgf("tkSAPPinAssign: %v", tkSAPPinAssign)
+	log.Debug().Msgf("ivCounterAssign: %v", ivCounterAssign)
+	log.Debug().Msgf("ecbkAssign: %v", ecbkAssign)
+	log.Debug().Msgf("ecb0Assign: %v", ecb0Assign)
+	log.Debug().Msgf("chipherChunksAssign: %v", chipherChunksAssign)
+	log.Debug().Msgf("ivAssign: %v", ivAssign)
+	log.Debug().Msgf("sequenceNumberAssign: %v", sequenceNumberAssign)
 
 	return &circuit, &assignment, err
 }
@@ -274,6 +297,7 @@ func readOracleParams() (map[string]string, error) {
 	return finalMap, nil
 }
 
+// TODO - Add sequence number, currently hardcoded
 func addCounter(iv string) string {
 	// add counter to iv bytes
 	var sb strings.Builder
@@ -283,7 +307,7 @@ func addCounter(iv string) string {
 	for i := 0; i < 7; i++ {
 		sb.WriteString("0")
 	}
-	sb.WriteString("1")
+	sb.WriteString("2")
 	return sb.String()
 }
 

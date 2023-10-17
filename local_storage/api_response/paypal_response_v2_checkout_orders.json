@@ -1,0 +1,59 @@
+{
+  "id": "1FS49645758443520",
+  "intent": "CAPTURE",
+  "status": "CREATED",
+  "purchase_units": [
+    {
+      "reference_id": "testReferenceID2",
+      "amount": {
+        "currency_code": "USD",
+        "value": "38002.20",
+        "breakdown": {
+          "item_total": {
+            "currency_code": "USD",
+            "value": "38002.20"
+          }
+        }
+      },
+      "payee": {
+        "email_address": "john_merchant@example.com",
+        "merchant_id": "C7CYMKZDG8D6E"
+      },
+      "soft_descriptor": "JOHNMERCHAN",
+      "items": [
+        {
+          "name": "T-Shirt",
+          "unit_amount": {
+            "currency_code": "USD",
+            "value": "38002.20"
+          },
+          "quantity": "1",
+          "description": "Green XL"
+        }
+      ]
+    }
+  ],
+  "create_time": "2023-10-17T08:19:59Z",
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1FS49645758443520",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://www.sandbox.paypal.com/checkoutnow?token=1FS49645758443520",
+      "rel": "approve",
+      "method": "GET"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1FS49645758443520",
+      "rel": "update",
+      "method": "PATCH"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/1FS49645758443520/capture",
+      "rel": "capture",
+      "method": "POST"
+    }
+  ]
+}

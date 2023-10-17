@@ -10,7 +10,7 @@ import (
 
 // REPLACE Bearer Token for testing
 const paypalEndpoint = "https://api-m.sandbox.paypal.com/v2/checkout/orders"
-const bearerToken = "Bearer A21AAJO_X_tspTo_FurV9rmbralkTpfCii0HdKf8Lyvcpowr3TVqc55ORHhRazykkbdKqh0sCH3vLc3bwB2yXJ5Hpn81MbFsw"
+const bearerToken = "Bearer A21AAJ11R4Ph-JOUCrdDAY-ydSHR5lPjvDDg7ILuEeOj9na7ABfSj9fjXgLxn1yQf3FsgSwO2G5xLi7gcpPEGNXAmQk8tr9NQ"
 const proxyURL = "localhost:8082" // replace with your actual proxy URL
 
 func TestPostToPaypal(t *testing.T) {

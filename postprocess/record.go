@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"strconv"
@@ -15,19 +16,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// TODO: move to config, improve policy handling
-var serverPolicyPaths = map[string]string{
-	"local":  "policy/policy.json",
-	"paypal": "policy/policy_paypal.json",
-}
-
 func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) error {
 
 	// init values
 	found := false
 
 	// get policy
-	policy, err := p.New(serverPolicyPaths[server])
+	policy, err := p.New(p.ServerPolicyPaths[server])
 	log.Debug().Msgf("Policy: %s", policy)
 
 	if err != nil {
@@ -40,7 +35,7 @@ func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) e
 
 	// parse plaintext chunks
 	// record has SR content found in session_params_13
-	for _, record := range rps {
+	for seq, record := range rps {
 
 		// loop over plaintext 16b chunks
 		plaintextBytes, err := hex.DecodeString(record["payload"])
@@ -64,10 +59,11 @@ func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) e
 		var startIdxAreaOfInterest, endIdxAreaOfInterest, chunkIndex int
 		found = strings.Contains(plaintext, policy.Substring)
 		if found {
+			log.Debug().Msg("Substring match found in sequence number " + string(seq))
 			startIdxAreaOfInterest = strings.Index(plaintext, policy.Substring)
 			endIdxAreaOfInterest = startIdxAreaOfInterest + len(policy.Substring) + policy.ValueStartIdxAfterSS + policy.ValueLength
 		} else {
-			log.Error().Msg("Substring match not found in plaintext")
+			log.Error().Msg("Substring match not found in plaintext for sequence number " + string(seq))
 			continue // Skip to the next record in rps
 		}
 
@@ -94,6 +90,7 @@ func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) e
 		jsonData["size_area_of_interest"] = strconv.Itoa(sizeAreaOfInterest)
 		jsonData["size_value"] = strconv.Itoa(policy.ValueLength)
 		jsonData["cipher_chunks"] = hex.EncodeToString(ciphertextBytes[chunkIndex*16 : (chunkIndex+number_chunks)*16])
+		jsonData["sequence_number"] = string(seq)
 		jsonData2["plain_chunks"] = hex.EncodeToString(plaintextBytes[chunkIndex*16 : (chunkIndex+number_chunks)*16])
 		// chunk level substring start index
 		jsonData["substring_start"] = strconv.Itoa(start_idx_chunks)
@@ -101,9 +98,6 @@ func ParsePlaintextWithPolicy(server string, rps map[string]map[string]string) e
 		jsonData["value_start"] = strconv.Itoa(start_idx_chunks + sizeAreaOfInterest - policy.ValueLength - 1)
 		jsonData["value_end"] = strconv.Itoa(start_idx_chunks + sizeAreaOfInterest - 1)
 		log.Debug().Str("string", string(plaintextBytes[startIdxAreaOfInterest:startIdxAreaOfInterest+sizeAreaOfInterest])).Msg("area of interest")
-		log.Debug().Str("plain_chunks", string(policy.Substring)).Msg("Logged plain_chunks.")
-		log.Debug().Str("plain_chunks", string(policy.ValueStartIdxAfterSS)).Msg("Logged plain_chunks.")
-		log.Debug().Str("plain_chunks", string(policy.ValueLength)).Msg("Logged plain_chunks.")
 	}
 
 	err = u.StoreM(jsonData, "recorddata_public_input")
@@ -146,9 +140,16 @@ func RecordTagZkInput(sParams map[string]string, rps map[string]map[string]strin
 			copy(gcm_nonce[:], ivBytes)
 		}
 
-		// must be set if nonce comes in default size equal to 12
-		gcm_nonce[15] = 1
-		// fmt.Println("gcm_nonce:", gcm_nonce, hex.EncodeToString(gcm_nonce[:]))
+		// Copy ivBytes into the first part of the nonce
+		copy(gcm_nonce[:], ivBytes)
+
+		seqNum, err := strconv.Atoi(sequence)
+		if err != nil {
+			return errors.New("failed to parse sequence number")
+		}
+		gcm_nonce[15] = byte(seqNum + 1)
+
+		log.Debug().Msgf("Sequence: %s | gcm_nonce: %s", sequence, hex.EncodeToString(gcm_nonce[:]))
 
 		// compute encrypted counter block zero vector (ECB0)
 		// ECB0 depends on key+iv and counter=0

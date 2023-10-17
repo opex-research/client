@@ -1,6 +1,7 @@
 package main
 
 import (
+	p "client/policy"
 	pp "client/postprocess"
 	prv "client/prove"
 	r "client/request"
@@ -138,11 +139,19 @@ func main() {
 	}
 
 	if *prove {
+		log.Debug().Msgf("Server value: %+v", *server)
+
+		policy, err := p.New(p.ServerPolicyPaths[*server])
+		if err != nil {
+			log.Error().Msg("Read policy file")
+		}
+
+		log.Debug().Msgf("Loaded policy: %+v", policy)
 
 		startTime := time.Now()
 
 		// get witness
-		_, assignment, err := prv.CircuitAssign()
+		_, assignment, err := prv.CircuitAssign(policy.ThresholdValue)
 		if err != nil {
 			log.Error().Msg("prv.ComputeWitness()")
 		}
@@ -175,7 +184,12 @@ func main() {
 	// call setup
 	if *setup {
 
-		circuit, _, err := prv.CircuitAssign()
+		policy, err := p.New(p.ServerPolicyPaths[*server])
+		if err != nil {
+			log.Error().Msg("Read policy file")
+		}
+
+		circuit, _, err := prv.CircuitAssign(policy.ThresholdValue)
 		if err != nil {
 			log.Error().Msg("prv.ComputeWitness()")
 		}
@@ -206,7 +220,7 @@ func main() {
 func handlePaypalRequest(hsonly bool, serverDomain string, serverEndpoint string, proxyListenerURL string) {
 
 	config := &r.PaypalConfig{
-		ReferenceID: "testReferenceID",
+		ReferenceID: "testReferenceID2",
 		AmountValue: "38002.2",
 		ReturnURL:   "https://example.com/return",
 		CancelURL:   "https://example.com/cancel",
@@ -215,8 +229,8 @@ func handlePaypalRequest(hsonly bool, serverDomain string, serverEndpoint string
 	requestTLS := r.NewRequestPayPal(serverDomain, serverEndpoint, proxyListenerURL, config)
 
 	// TODO - Replace the bearer token with the one you get from PayPal.
-	requestTLS.AccessToken = "Bearer A21AAJO_X_tspTo_FurV9rmbralkTpfCii0HdKf8Lyvcpowr3TVqc55ORHhRazykkbdKqh0sCH3vLc3bwB2yXJ5Hpn81MbFsw"
-	realPaypalRequestID := "7b92603e-77ed-4896-8e78-5dea2050476a"
+	requestTLS.AccessToken = "Bearer A21AALHqcAmtWlvLHM7-hgIwWWnpPXAwkwZ56rW-otm6lH4gfeTBeNmcH7hqz_vKIN8fN5vV-_6ipbytbmUowS0dASrMZ6znQ"
+	realPaypalRequestID := "7b92603e-77ed-4896-8e78-5dea2050476b"
 
 	data, err := requestTLS.PostToPaypal(true, realPaypalRequestID)
 	if err != nil {

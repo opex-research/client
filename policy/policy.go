@@ -8,6 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var ServerPolicyPaths = map[string]string{
+	"local":  "policy/policy_local.json",
+	"paypal": "policy/policy_paypal.json",
+}
+
 type Policy struct {
 	Substring            string `json:"substring"`
 	ValueStartIdxAfterSS int    `json:"value_start_idx_after_ss"`

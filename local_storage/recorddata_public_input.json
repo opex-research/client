@@ -1,13 +1,14 @@
 {
- "chunk_index": "32",
- "cipher_chunks": "637d1da6b98476ee126694dad9f1232ddb6e95218a6bc938eabff4bafe6ac819",
+ "chunk_index": "11",
+ "cipher_chunks": "ad2fb909edb4d03f147902f014457fbb28e44813d87d1c7f4cf630de2679011a",
  "number_chunks": "2",
+ "sequence_number": "0000000000000001",
  "size_area_of_interest": "15",
  "size_value": "5",
- "substring": "\"price\"",
- "substring_end": "20",
- "substring_start": "13",
- "substring_start_idx": "493",
- "value_end": "27",
- "value_start": "22"
+ "substring": "\"value\"",
+ "substring_end": "12",
+ "substring_start": "5",
+ "substring_start_idx": "149",
+ "value_end": "19",
+ "value_start": "14"
 }
