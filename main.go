@@ -44,6 +44,9 @@ func main() {
 	// check for -stats flag
 	stats := flag.Bool("stats", false, "measures file sizes of zk and transcript files.")
 
+	// Session ID for measurements
+	sessionID := flag.String("sessionid", "", "session ID for the client.")
+
 	// Set Server parameters
 	serverDomain := flag.String("serverdomain", "", "URL of the proxy server")
 	serverEndpoint := flag.String("serverendpoint", "", "URL of the proxy server")
@@ -70,6 +73,9 @@ func main() {
 		log.Trace().Msg("Debugging activated.")
 	}
 
+	// Measurement initialization
+	measurements := u.NewMeasurements(*sessionID)
+
 	if *request {
 
 		if *proxyListenerURL == "" {
@@ -77,18 +83,24 @@ func main() {
 			return
 		}
 
-		startTime := time.Now()
+		measurements.Start("PostProcess")
 
 		if *server == "local" {
 			handleRequest(*hsonly, *serverDomain, *serverEndpoint, *proxyListenerURL)
 		}
 
 		if *server == "paypal" {
+			measurements.Start("SendRequest")
 			handlePaypalRequest(*hsonly, *serverDomain, *serverEndpoint, *proxyListenerURL)
+			measurements.End("SendRequest")
 		}
 
+		measurements.Start("ProcessKDC")
 		handlePostProcessKDC()
+		measurements.End("ProcessKDC")
+		measurements.Start("PostProcessRecord")
 		handlePostProcessRecord(*server)
+		measurements.End("PostProcessRecord")
 
 		// Prepare data to be sent
 		kdcShared, err := u.ReadAndCheckFile("local_storage/kdc_shared.json")
@@ -122,24 +134,35 @@ func main() {
 			KDCPublicInput:   kdcPublicInput,
 		}
 
+		measurements.Start("SendCombinedDataToProxy")
 		err = u.SendCombinedDataToProxy("postprocess", *proxyServerURL, combinedData)
+		measurements.End("SendCombinedDataToProxy")
 
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to complete postprocess on proxy.")
 			return
 		}
 
-		endTimePostProcess := time.Now()
+		measurements.End("PostProcess")
 
-		// 3) Calculate the duration
-		durationPostProcess := endTimePostProcess.Sub(startTime)
+		// Check and create /performance directory if it doesn't exist
+		if err := u.CheckAndCreateDir("performance"); err != nil {
+			log.Error().Err(err).Msg("Failed to create performance directory.")
+			return
+		}
 
-		// 4) Log the duration
-		log.Info().Str("duration", durationPostProcess.String()).Msg("Total time taken from the start of the request, sending /postprocess to proxy & receiving a response from proxy.")
+		// Dump the measurements to a CSV file in /performance directory
+		err = measurements.DumpToCSV("performance/measurements_client_main.csv")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to write measurements to CSV.")
+			return
+		}
 	}
 
 	if *prove {
 		log.Debug().Msgf("Server value: %+v", *server)
+
+		measurements.Start("CompleteProve")
 
 		policy, err := p.New(p.ServerPolicyPaths[*server])
 		if err != nil {
@@ -148,7 +171,8 @@ func main() {
 
 		log.Debug().Msgf("Loaded policy: %+v", policy)
 
-		startTime := time.Now()
+		// MEASURE - Start time assign circuit
+		measurements.Start("CircuitAssign")
 
 		// get witness
 		_, assignment, err := prv.CircuitAssign(policy.ThresholdValue)
@@ -156,12 +180,17 @@ func main() {
 			log.Error().Msg("prv.ComputeWitness()")
 		}
 
+		measurements.End("CircuitAssign")
+
 		// compute proof
 		backend := "groth16"
-		err = prv.ComputeProof(backend, assignment)
+
+		measurements.Start("ComputeProof")
+		err = prv.ComputeProof(backend, assignment, measurements)
 		if err != nil {
 			log.Error().Msg("prv.ComputeProof()")
 		}
+		measurements.End("ComputeProof")
 
 		proofFilePath := "local_storage/circuits/oracle_" + backend + ".proof" // Modify this to the correct path
 		success, err := u.SendProofToProxy("/verify", *proxyServerURL, proofFilePath)
@@ -171,13 +200,20 @@ func main() {
 			return
 		}
 
-		endTimeProve := time.Now()
+		measurements.End("CompleteProve")
 
-		// 3) Calculate the duration
-		durationProve := endTimeProve.Sub(startTime)
+		// Check and create /performance directory if it doesn't exist
+		if err = u.CheckAndCreateDir("performance"); err != nil {
+			log.Error().Err(err).Msg("Failed to create performance directory.")
+			return
+		}
 
-		// 4) Log the duration
-		log.Info().Str("duration", durationProve.String()).Msg("Total time taken to create the proof, sending /verify to proxy & receiving a response from proxy.")
+		// Dump the measurements to a CSV file in /performance directory
+		err = measurements.DumpToCSV("performance/measurements_client.csv")
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to write measurements to CSV.")
+			return
+		}
 
 	}
 
@@ -229,7 +265,7 @@ func handlePaypalRequest(hsonly bool, serverDomain string, serverEndpoint string
 	requestTLS := r.NewRequestPayPal(serverDomain, serverEndpoint, proxyListenerURL, config)
 
 	// TODO - Replace the bearer token with the one you get from PayPal.
-	requestTLS.AccessToken = "Bearer A21AALHqcAmtWlvLHM7-hgIwWWnpPXAwkwZ56rW-otm6lH4gfeTBeNmcH7hqz_vKIN8fN5vV-_6ipbytbmUowS0dASrMZ6znQ"
+	requestTLS.AccessToken = "Bearer A21AAKiVryygSELVXKfz2xyOWAc__wHyr7rJn8Q10-jqbor7ruZFB4MSM5iY_24uoysAlA37bhVSZSBHBd4CtgQLyB6cllQVw"
 	realPaypalRequestID := "7b92603e-77ed-4896-8e78-5dea2050476b"
 
 	data, err := requestTLS.PostToPaypal(true, realPaypalRequestID)
@@ -260,7 +296,6 @@ func handleRequest(hsonly bool, serverDomain string, serverEndpoint string, prox
 }
 
 func handlePostProcessKDC() {
-	start := time.Now()
 
 	// read in session data
 	toBshared, err := pp.Read()
@@ -302,9 +337,6 @@ func handlePostProcessKDC() {
 	if err != nil {
 		log.Error().Msg("pp.KdcPrivateInput")
 	}
-
-	elapsed := time.Since(start)
-	log.Debug().Str("elapsed", elapsed.String()).Msg("postprocess_kdc time.")
 }
 
 func handlePostProcessRecord(server string) {

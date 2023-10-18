@@ -324,39 +324,48 @@ func padDHSin(dHSin string) (string, int) {
 	return newdHSin, dHSinByteLen
 }
 
-func ComputeProof(backend string, assignment frontend.Circuit) error {
+func ComputeProof(backend string, assignment frontend.Circuit, measurements *u.Measurements) error {
 
 	// generate witness
+	measurements.Start("NewWitness")
 	w, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 	if err != nil {
 		log.Error().Msg("frontend.NewWitness")
 		return err
 	}
+	measurements.End("NewWitness")
 
 	switch backend {
 	case "groth16":
-
+		measurements.Start("GetCircuit")
 		circuit, err := GetCircuit()
 		if err != nil {
 			log.Error().Msg("groth16 GetCircuit")
 			return err
 		}
+		measurements.End("GetCircuit")
 
 		backend := "groth16"
+		measurements.Start("CompileCircuit")
 		ccs, err := CompileCircuit(backend, circuit)
 		if err != nil {
 			log.Error().Msg("groth16 CompileCircuit")
 			return err
 		}
+		measurements.End("CompileCircuit")
 
+		measurements.Start("NewProvingKey")
 		pk := groth16.NewProvingKey(ecc.BN254)
 		u.Deserialize(pk, "./local_storage/circuits/proof.pk")
+		measurements.End("NewProvingKey")
 
+		measurements.Start("Prove")
 		proof, err := groth16.Prove(ccs, pk, w)
 		if err != nil {
 			log.Error().Msg("groth16.Prove")
 			return err
 		}
+		measurements.End("Prove")
 
 		u.Serialize(proof, "./local_storage/circuits/oracle_"+backend+".proof")
 	case "plonk":
