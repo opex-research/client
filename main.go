@@ -152,7 +152,7 @@ func main() {
 		}
 
 		// Dump the measurements to a CSV file in /performance directory
-		err = measurements.DumpToCSV("performance/measurements_client_main.csv")
+		err = measurements.DumpToCSV("performance/measurements_client.csv")
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to write measurements to CSV.")
 			return
