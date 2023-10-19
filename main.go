@@ -265,7 +265,7 @@ func handlePaypalRequest(hsonly bool, serverDomain string, serverEndpoint string
 	requestTLS := r.NewRequestPayPal(serverDomain, serverEndpoint, proxyListenerURL, config)
 
 	// TODO - Replace the bearer token with the one you get from PayPal.
-	requestTLS.AccessToken = "Bearer A21AAKiVryygSELVXKfz2xyOWAc__wHyr7rJn8Q10-jqbor7ruZFB4MSM5iY_24uoysAlA37bhVSZSBHBd4CtgQLyB6cllQVw"
+	requestTLS.AccessToken = "Bearer A21AAK5m2TbgqICzrR_sgmUBjaHJ0b_ELE77nMFdrIiSI4pdg5vsmY5WArm8ddESIsuNiXxX-arxPwB2Dm2N8s4WFLAuVoXCA"
 	realPaypalRequestID := "7b92603e-77ed-4896-8e78-5dea2050476b"
 
 	data, err := requestTLS.PostToPaypal(true, realPaypalRequestID)
