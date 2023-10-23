@@ -5,6 +5,9 @@ import (
 	tls "client/tls-fork"
 	"encoding/hex"
 	"encoding/json"
+	"io"
+	"os"
+	"strings"
 
 	// "crypto/tls"
 	"crypto/x509"
@@ -135,6 +138,18 @@ func (r *RequestTLS) Call(hsOnly bool) (RequestData, error) {
 		request.Header.Set("Authorization", "Bearer "+r.AccessToken)
 	}
 
+	// Here's the new code to add the padding
+	dummyBuffer := bufio.NewWriter(nil)
+	request.Write(dummyBuffer)
+	requestSize := dummyBuffer.Buffered()
+
+	paddingSize := 2048 - requestSize
+
+	if paddingSize > 0 {
+		padding := strings.Repeat("a", paddingSize)
+		request.Header.Set("X-Dummy-Padding", padding)
+	}
+
 	// initialize connection buffers
 	bufr := bufio.NewReader(conn)
 	bufw := bufio.NewWriter(conn)
@@ -145,6 +160,9 @@ func (r *RequestTLS) Call(hsOnly bool) (RequestData, error) {
 		log.Error().Err(err).Msg("request.Write(bufw)")
 		return RequestData{}, err
 	}
+
+	requestSize = bufw.Buffered()
+	log.Debug().Int("size", requestSize).Msg("Byte size of the request.")
 
 	// writes buffer data into connection io.Writer
 	err = bufw.Flush()
@@ -160,6 +178,21 @@ func (r *RequestTLS) Call(hsOnly bool) (RequestData, error) {
 		return RequestData{}, err
 	}
 	defer resp.Body.Close()
+
+	// Create a JSON file in local_storage directory
+	outFile, err := os.Create("local_storage/api_response/response.json")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create file")
+		return RequestData{}, err
+	}
+	defer outFile.Close()
+
+	// Copy the HTTP response body (in JSON format) to the file
+	_, err = io.Copy(outFile, resp.Body)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to write response to file")
+		return RequestData{}, err
+	}
 
 	// reads response body
 	msg, _ := ioutil.ReadAll(resp.Body)
