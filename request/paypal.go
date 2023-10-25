@@ -266,7 +266,7 @@ func RequestPaypalNoProxy(endpoint string, paypalRequestID string, bearerToken s
 	}
 
 	// Log the request body
-	log.Debug().Str("endpoint", endpoint).Msgf("Request Body:\n%s", string(jsonBody))
+	// log.Debug().Str("endpoint", endpoint).Msgf("Request Body:\n%s", string(jsonBody))
 
 	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -281,11 +281,11 @@ func RequestPaypalNoProxy(endpoint string, paypalRequestID string, bearerToken s
 	defer resp.Body.Close()
 
 	// Read and log the response body
-	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	log.Debug().Str("endpoint", endpoint).Msgf("Response Body:\n%s", string(responseData))
+	// responseData, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return err
+	// }
+	// log.Debug().Str("endpoint", endpoint).Msgf("Response Body:\n%s", string(responseData))
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Msgf("Failed to post to PayPal with status: %s", resp.Status)
